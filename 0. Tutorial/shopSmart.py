@@ -25,7 +25,26 @@ def shopSmart(orderList, fruitShops):
         fruitShops: List of FruitShops
     """    
     "*** YOUR CODE HERE ***"
-    return None
+
+    bestShop = None
+    bestCost = -1
+
+    for shop in fruitShops:
+      totalCost = 0;
+      for fruit, numPound in orderList:
+        fruitCost = shop.getCostPerPound(fruit)
+        if fruitCost != None:
+          totalCost += fruitCost * numPound
+        else:
+          totalCost = -1;
+          break
+      if (totalCost > 0) and (totalCost < bestCost or bestCost == -1):
+        bestShop = shop
+        bestCost = totalCost
+
+      # print "Shop %s: %.2f" % (shop.getName(), totalCost)
+
+    return bestShop
     
 if __name__ == '__main__':
   "This code runs when you invoke the script from the command line"
