@@ -12,8 +12,12 @@
 In search.py, you will implement generic search algorithms which are called
 by Pacman agents (in searchAgents.py).
 """
+from collections import Set
+from operator import contains
+from sets import Set
 
 import util
+
 
 class SearchProblem:
     """
@@ -65,9 +69,77 @@ def tinyMazeSearch(problem):
     maze, the sequence of moves will be incorrect, so only use this for tinyMaze
     """
     from game import Directions
+
     s = Directions.SOUTH
     w = Directions.WEST
-    return  [s,s,w,s,w,w,s,w]
+    return [s, s, w, s, w, w, s, w]
+
+
+class Fringe:
+    def __init__(self, state, actions, cost):
+        """
+        :type state: tuple
+        :type actions: list
+        :type cost: int
+        :rtype : Fringe
+        """
+        self.state = state
+        self.actions = actions
+        self.cost = cost
+
+
+def maxCostFirst(fringe):
+    """
+    :returns priority inversely proportional to the given cost
+    :param fringe: Fringe
+    :rtype : int
+    """
+    return -fringe.cost
+
+def minCostFirst(fringe):
+    """
+    :returns priority directly proportional to the given cost
+    :param fringe: Fringe
+    :rtype : int
+    """
+    return fringe.cost
+
+def graphSearchWithPriorityQueue(problem, priority_func):
+    # start fringe (state, actions, cost)
+    goal_fringe = fringe = Fringe(problem.getStartState(), [], 0)
+
+    # closed set
+    closed = Set()
+
+    # all possible states
+    fringe_queue = util.PriorityQueueWithFunction(priority_func)
+    fringe_queue.push(fringe)
+
+    while not fringe_queue.isEmpty():
+        # pop
+        fringe = fringe_queue.pop()
+
+        # goal test
+        if problem.isGoalState(fringe.state):
+            goal_fringe = fringe
+            break
+
+        # closed set
+        if contains(closed, fringe.state):
+            continue
+        else:
+            closed.add(fringe.state)
+
+        # expand
+        for successor in problem.getSuccessors(fringe.state):
+            actions = fringe.actions[:]
+            actions.append(successor[1])
+
+            # push
+            fringe_queue.push(Fringe(successor[0], actions, fringe.cost + successor[2]))
+
+    return goal_fringe.actions if goal_fringe is not None else []
+
 
 def depthFirstSearch(problem):
     """
@@ -84,19 +156,57 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return graphSearchWithPriorityQueue(problem, maxCostFirst)
+
+    # # start fringe (state, actions, cost)
+    # goal_fringe = fringe = Fringe(problem.getStartState(), [], 0)
+    #
+    # # closed set
+    # closed = Set()
+    #
+    # # all possible states
+    # fringe_queue = util.PriorityQueueWithFunction(dfs_priority_func)
+    # fringe_queue.push(fringe)
+    #
+    # while not fringe_queue.isEmpty():
+    #     # pop
+    #     fringe = fringe_queue.pop()
+    #
+    #     # goal test
+    #     if problem.isGoalState(fringe.state):
+    #         goal_fringe = fringe
+    #         break
+    #
+    #     # closed set
+    #     if contains(closed, fringe.state):
+    #         continue
+    #     else:
+    #         closed.add(fringe.state)
+    #
+    #     # expand
+    #     for successor in problem.getSuccessors(fringe.state):
+    #         actions = fringe.actions[:]
+    #         actions.append(successor[1])
+    #
+    #         # push
+    #         fringe_queue.push(Fringe(successor[0], actions, fringe.cost + successor[2]))
+    #
+    # return goal_fringe.actions if goal_fringe is not None else []
+
 
 def breadthFirstSearch(problem):
     """
     Search the shallowest nodes in the search tree first.
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return graphSearchWithPriorityQueue(problem, minCostFirst)
+
 
 def uniformCostSearch(problem):
     "Search the node of least total cost first. "
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    return graphSearchWithPriorityQueue(problem, minCostFirst)
+
 
 def nullHeuristic(state, problem=None):
     """
@@ -104,6 +214,7 @@ def nullHeuristic(state, problem=None):
     goal in the provided SearchProblem.  This heuristic is trivial.
     """
     return 0
+
 
 def aStarSearch(problem, heuristic=nullHeuristic):
     "Search the node that has the lowest combined cost and heuristic first."
