@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>Project 1</name>
+	<name>1. Search And Planning</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -14,11 +14,4 @@
 	<natures>
 		<nature>org.python.pydev.pythonNature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>1. Search And Planning</name>
-			<type>2</type>
-			<locationURI>PARENT-2-PROJECT_LOC/1.%20Search%20And%20Planning</locationURI>
-		</link>
-	</linkedResources>
 </projectDescription>
