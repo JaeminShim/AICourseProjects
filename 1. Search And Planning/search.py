@@ -76,16 +76,24 @@ def tinyMazeSearch(problem):
 
 
 class Fringe:
-    def __init__(self, state, actions, cost):
+    def __init__(self, state, actions, cost_backward, cost_forward):
         """
         :type state: tuple
         :type actions: list
-        :type cost: int
+        :type cost_backward: int
+        :type cost_forward: int
         :rtype : Fringe
         """
         self.state = state
         self.actions = actions
-        self.cost = cost
+        self.cost_backward = cost_backward
+        self.cost_forward = cost_forward
+
+    def total_cost(self):
+        """
+        :return: int
+        """
+        return self.cost_backward + self.cost_forward
 
 
 def maxCostFirst(fringe):
@@ -94,7 +102,7 @@ def maxCostFirst(fringe):
     :param fringe: Fringe
     :rtype : int
     """
-    return -fringe.cost
+    return -fringe.total_cost()
 
 
 def minCostFirst(fringe):
@@ -103,18 +111,26 @@ def minCostFirst(fringe):
     :param fringe: Fringe
     :rtype : int
     """
-    return fringe.cost
+    return fringe.total_cost()
 
 
 def graphSearchWithPriorityQueue(problem, priority_func, heuristic=None):
+
     # start fringe (state, actions, cost)
-    goal_fringe = fringe = Fringe(problem.getStartState(), [], 0)
+    """
+    :param problem: problem
+    :param priority_func: func(Fringe) returns int
+    :param heuristic: func(state, problem)
+    :return:
+    """
+    goal_fringe = fringe = Fringe(problem.getStartState(), [], 0, 0)
 
     # closed set
     closed = Set()
 
     # all possible states
-    fringe_queue = util.PriorityQueueWithFunction(priority_func)
+    from util import PriorityQueueWithFunction
+    fringe_queue = PriorityQueueWithFunction(priority_func)
     fringe_queue.push(fringe)
 
     while not fringe_queue.isEmpty():
@@ -134,10 +150,10 @@ def graphSearchWithPriorityQueue(problem, priority_func, heuristic=None):
 
         # expand
         for successor in problem.getSuccessors(fringe.state):
-            expanded = Fringe(successor[0], fringe.actions[:], fringe.cost + successor[2])
+            expanded = Fringe(successor[0], fringe.actions[:], fringe.cost_backward + successor[2], 0)
             expanded.actions.append(successor[1])
             if heuristic is not None:
-                expanded.cost += heuristic(expanded.state, problem)
+                expanded.cost_forward = heuristic(expanded.state, problem)
 
             # push
             fringe_queue.push(expanded)
