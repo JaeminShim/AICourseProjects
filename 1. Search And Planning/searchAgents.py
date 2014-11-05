@@ -368,15 +368,13 @@ def cornersHeuristic(state, problem):
     "*** YOUR CODE HERE ***"
 
     # manhattan distance to the closest active corner
-    closest_dist = 99999
+    max_distance = 0
     for corner in corners:
         if state[1][corners.index(corner)][0]:
             distance = abs(corner[0] - state[0][0]) + abs(corner[1] - state[0][1])
-            if closest_dist > distance:
-                closest_dist = distance
-    if closest_dist == 99999:
-        closest_dist = 0
-    return closest_dist
+            if max_distance < distance:
+                max_distance = distance
+    return max_distance
 
     # number of active corner
     return state[1].count(True)
