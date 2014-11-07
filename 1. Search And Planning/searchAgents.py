@@ -396,7 +396,7 @@ def cornersHeuristic(state, problem):
     combine_results = False
     results = []
 
-    # 4. manhattan distance from test_position to the next closest corner
+    # 4. manhattan distance from test_position to the next closest corner for all active corners
     if True:
         active_corners = []
         for corner in corners:
@@ -542,6 +542,112 @@ class AStarFoodSearchAgent(SearchAgent):
         self.searchType = FoodSearchProblem
 
 
+def calc_min_food_distance(foods, position):
+    """
+    :type foods: Grid
+    :type position: tuple
+    :rtype: int, tuple
+
+    :param foods: boolean array represents existence of food in map
+    :param position: test position
+    :return: distance to the closest food
+    """
+    px, py = position
+    if not foods[px][py] and foods.count() > 0:
+        sign = [-1, 1]
+        max_range = foods.width + foods.height
+        for d in range(1, max_range):
+            for i in range(d + 1):
+                for sign_x in sign:
+                    x = px + (i * sign_x)
+                    if x < 0 or x >= foods.width:
+                        continue
+
+                    for sign_y in sign:
+                        y = py + ((d - i) * sign_y)
+                        if y < 0 or y >= foods.height:
+                            continue
+
+                        if foods[x][y]:
+                            return d, (x, y)
+    return 0, position
+
+def calc_max_food_distance(foods, position):
+    """
+    :type foods: Grid
+    :type position: tuple
+    :rtype: int, tuple
+
+    :param foods: boolean array represents existence of food in map
+    :param position: test position
+    :return: distance to the farthest food
+    """
+    px, py = position
+    if foods.count() > 0:
+        sign = [-1, 1]
+        max_range = foods.width + foods.height
+        for d in range(max_range - 1, 0, -1):
+            for i in range(d + 1):
+                for sign_x in sign:
+                    x = px + (i * sign_x)
+                    if x < 0 or x >= foods.width:
+                        continue
+
+                    for sign_y in sign:
+                        y = py + ((d - i) * sign_y)
+                        if y < 0 or y >= foods.height:
+                            continue
+
+                        if foods[x][y]:
+                            return d
+
+                        if y == py:
+                            break;
+
+                    if x == px:
+                        break;
+    return 0
+
+
+def get_closest_foods(foods, position):
+    """
+    :type foods: Grid
+    :type position: tuple
+    :rtype: int, set(position)
+
+    :param foods: boolean array represents existence of food in map
+    :param position: test position
+    :return: distance to the closest food, list of closest foods
+    """
+    px, py = position
+    pos_set = set()
+
+    if not foods[px][py] and foods.count() > 0:
+        sign = [-1, 1]
+        max_range = max(foods.width, foods.height)
+
+        for d in range(1, max_range):
+            for i in range(d + 1):
+                for sign_x in sign:
+                    x = px + (i * sign_x)
+                    if x < 0 or x >= foods.width:
+                        continue
+
+                    for sign_y in sign:
+                        y = py + ((d - i) * sign_y)
+                        if y < 0 or y >= foods.height:
+                            continue
+
+                        if foods[x][y]:
+                            pos_set.add((x, y))
+
+            if len(pos_set) > 0:
+                return d, pos_set
+
+    pos_set.add(position)
+    return 0, pos_set
+
+
 def foodHeuristic(state, problem):
     """
     Your heuristic for the FoodSearchProblem goes here.
@@ -574,6 +680,54 @@ def foodHeuristic(state, problem):
     # variables for test
     combine_results = False
     results = []
+    ## template to use combine_results
+    # if True:          # enable or disable heuristic
+    #     result = 0    # set heuristic result in here
+    #
+    #     if combine_results:
+    #         results.append(result)
+    #     else:
+    #         return result
+
+
+    # not admissible (also not consistence)
+    # # -. manhattan distance from test_position to the next closest food with given iteration
+    # if True:
+    #     result = 0
+    #
+    #     max_iteration = 2  # magic number. must be bigger than 1 for non-trivial result.
+    #     foods = foodGrid.copy()
+    #     test_position = position
+    #
+    #     for t in range(min(foodGrid.count(), max_iteration)):
+    #         test_result, test_position = calc_min_food_distance(foods, test_position)
+    #         result += test_result
+    #         foods[test_position[0]][test_position[1]] = False
+    #
+    #     result += foods.count()
+    #
+    #     if combine_results:
+    #         results.append(result)
+    #     else:
+    #         return result
+
+    # 4. (greedy + result of greedy) for all greedy cases
+    if True:
+        closest_dist, closest_foods = get_closest_foods(foodGrid, position)
+
+        max_distance = max(map(lambda food_position: calc_max_food_distance(foodGrid, food_position), closest_foods))
+        # max_distance = 0;
+        # for food_position in closest_foods:
+        #     distance = calc_max_food_distance(foodGrid, food_position)
+        #     if distance > max_distance:
+        #         max_distance = distance
+
+        result = closest_dist + max_distance
+
+        if combine_results:
+            results.append(result)
+        else:
+            return result
 
     # 3. manhattan distance to the farthest food
     if True:
