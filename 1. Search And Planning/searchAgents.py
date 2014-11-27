@@ -711,6 +711,16 @@ def foodHeuristic(state, problem):
     #     else:
     #         return result
 
+    if True:
+        maxdist = 0
+        foodPosList = foodGrid.asList()
+        for foodPos in foodPosList:
+            distance = mazeDistance(position, foodPos, problem.startingGameState)
+            if distance > maxdist:
+                maxdist = distance
+
+        return maxdist
+
     # 4. (greedy + result of greedy) for all greedy cases
     if True:
         closest_dist, closest_foods = get_closest_foods(foodGrid, position)
