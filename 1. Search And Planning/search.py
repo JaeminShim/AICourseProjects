@@ -96,7 +96,7 @@ class Fringe:
         return self.cost_backward + self.cost_forward
 
 
-def maxCostFirst(fringe):
+def priority_func_max_cost_first(fringe):
     """
     :returns priority inversely proportional to the given cost
     :param fringe: Fringe
@@ -105,7 +105,7 @@ def maxCostFirst(fringe):
     return -fringe.total_cost()
 
 
-def minCostFirst(fringe):
+def priority_func_min_cost_first(fringe):
     """
     :returns priority directly proportional to the given cost
     :param fringe: Fringe
@@ -114,14 +114,14 @@ def minCostFirst(fringe):
     return fringe.total_cost()
 
 
-def graphSearchWithPriorityQueue(problem, priority_func, heuristic=None):
+def graph_search(problem, priority_func, heuristic=None):
 
     # start fringe (state, actions, cost)
     """
     :param problem: problem
     :param priority_func: func(Fringe) returns int
     :param heuristic: func(state, problem)
-    :return:
+    :return: actions for the problem
     """
     goal_fringe = fringe = Fringe(problem.getStartState(), [], 0, 0)
 
@@ -145,18 +145,18 @@ def graphSearchWithPriorityQueue(problem, priority_func, heuristic=None):
         # closed set
         if contains(closed, fringe.state):
             continue
-        else:
-            closed.add(fringe.state)
+        closed.add(fringe.state)
 
         # expand
         for successor in problem.getSuccessors(fringe.state):
-            expanded = Fringe(successor[0], fringe.actions[:], fringe.cost_backward + successor[2], 0)
-            expanded.actions.append(successor[1])
+            next_state, action, cost = successor
+            expanded_fringe = Fringe(next_state, fringe.actions[:], fringe.cost_backward + cost, 0)
+            expanded_fringe.actions.append(action)
             if heuristic is not None:
-                expanded.cost_forward = heuristic(expanded.state, problem)
+                expanded_fringe.cost_forward = heuristic(expanded_fringe.state, problem)
 
             # push
-            fringe_queue.push(expanded)
+            fringe_queue.push(expanded_fringe)
 
     return goal_fringe.actions if goal_fringe is not None else []
 
@@ -176,7 +176,7 @@ def depthFirstSearch(problem):
     print "Start's successors:", problem.getSuccessors(problem.getStartState())
     """
     "*** YOUR CODE HERE ***"
-    return graphSearchWithPriorityQueue(problem, maxCostFirst)
+    return graph_search(problem, priority_func_max_cost_first)
 
 
 def breadthFirstSearch(problem):
@@ -184,13 +184,13 @@ def breadthFirstSearch(problem):
     Search the shallowest nodes in the search tree first.
     """
     "*** YOUR CODE HERE ***"
-    return graphSearchWithPriorityQueue(problem, minCostFirst)
+    return graph_search(problem, priority_func_min_cost_first)
 
 
 def uniformCostSearch(problem):
     "Search the node of least total cost first. "
     "*** YOUR CODE HERE ***"
-    return graphSearchWithPriorityQueue(problem, minCostFirst)
+    return graph_search(problem, priority_func_min_cost_first)
 
 
 def nullHeuristic(state, problem=None):
@@ -204,7 +204,7 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    return graphSearchWithPriorityQueue(problem, minCostFirst, heuristic)
+    return graph_search(problem, priority_func_min_cost_first, heuristic)
 
 
 # Abbreviations
