@@ -122,6 +122,7 @@ def graph_search(problem, priority_func, heuristic=None):
     :param priority_func: func(Fringe) returns int
     :param heuristic: func(state, problem)
     :return: actions for the problem
+    :rtype: list
     """
     goal_fringe = fringe = Fringe(problem.getStartState(), [], 0, 0)
 
