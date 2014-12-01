@@ -14,6 +14,36 @@ import random, util
 
 from game import Agent
 
+def calc_min_food_distance(foods, position):
+    """
+    :type foods: Grid
+    :type position: tuple
+    :rtype: int, tuple
+
+    :param foods: boolean array represents existence of food in map
+    :param position: test position
+    :return: distance to the closest food
+    """
+    px, py = position
+    if not foods[px][py] and foods.count() > 0:
+        sign = [-1, 1]
+        max_range = foods.width + foods.height
+        for d in range(1, max_range):
+            for i in range(d + 1):
+                for sign_x in sign:
+                    x = px + (i * sign_x)
+                    if x < 0 or x >= foods.width:
+                        continue
+
+                    for sign_y in sign:
+                        y = py + ((d - i) * sign_y)
+                        if y < 0 or y >= foods.height:
+                            continue
+
+                        if foods[x][y]:
+                            return d, (x, y)
+    return 0, position
+
 class ReflexAgent(Agent):
     """
       A reflex agent chooses an action at each choice point by examining
@@ -70,7 +100,23 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        cur_pos = currentGameState.getPacmanPosition()
+        cur_food = currentGameState.getFood()
+
+        import sys
+        for ghostState in newGhostStates:
+            if manhattanDistance(ghostState.getPosition(), newPos) < 2:
+                return -sys.maxint - 1
+
+        closest_food = calc_min_food_distance(newFood, newPos);
+        score = 1000 - closest_food[0]
+        if newPos == cur_pos:
+            score -= 1
+        elif cur_food[newPos[0]][newPos[1]]:
+            score = sys.maxint
+
+        return score
+        # return successorGameState.getScore()
 
 def scoreEvaluationFunction(currentGameState):
     """
