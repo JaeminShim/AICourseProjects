@@ -44,6 +44,42 @@ def calc_min_food_distance(foods, position):
                             return d, (x, y)
     return 0, position
 
+def calc_max_food_distance(foods, position):
+    """
+    :type foods: Grid
+    :type position: tuple
+    :rtype: int, tuple
+
+    :param foods: boolean array represents existence of food in map
+    :param position: test position
+    :return: distance to the farthest food
+    """
+    px, py = position
+    if foods.count() > 0:
+        sign = [-1, 1]
+        max_range = foods.width + foods.height
+        for d in range(max_range - 1, 0, -1):
+            for i in range(d + 1):
+                for sign_x in sign:
+                    x = px + (i * sign_x)
+                    if x < 0 or x >= foods.width:
+                        continue
+
+                    for sign_y in sign:
+                        y = py + ((d - i) * sign_y)
+                        if y < 0 or y >= foods.height:
+                            continue
+
+                        if foods[x][y]:
+                            return d
+
+                        if y == py:
+                            break;
+
+                    if x == px:
+                        break;
+    return 0
+
 class ReflexAgent(Agent):
     """
       A reflex agent chooses an action at each choice point by examining
@@ -103,15 +139,21 @@ class ReflexAgent(Agent):
         cur_pos = currentGameState.getPacmanPosition()
         cur_food = currentGameState.getFood()
 
+        score = 0
+
         import sys
         for ghostState in newGhostStates:
-            if manhattanDistance(ghostState.getPosition(), newPos) < 2:
+            ghostDist = manhattanDistance(ghostState.getPosition(), newPos)
+            if ghostState.scaredTimer > ghostDist/2:
+                return 2000 - ghostDist
+            elif ghostDist < 2:
                 return -sys.maxint - 1
 
-        closest_food = calc_min_food_distance(newFood, newPos);
-        score = 1000 - closest_food[0]
+        closest_food_dist, closest_food_pos = calc_min_food_distance(newFood, newPos)
+        farthest_food_dist = calc_max_food_distance(newFood, newPos)
+        score += 1000 - (farthest_food_dist + 2 * closest_food_dist if newFood.count() > 1 else closest_food_dist)
         if newPos == cur_pos:
-            score -= 1
+            score = -sys.maxint
         elif cur_food[newPos[0]][newPos[1]]:
             score = sys.maxint
 
