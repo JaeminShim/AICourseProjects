@@ -11,6 +11,10 @@
 from util import manhattanDistance
 from game import Directions
 import random, util
+import sys
+
+max_integer = sys.maxint
+min_integer = -sys.maxint - 1
 
 from game import Agent
 
@@ -141,7 +145,6 @@ class ReflexAgent(Agent):
 
         score = 0
 
-        import sys
         for ghostState in newGhostStates:
             ghostDist = manhattanDistance(ghostState.getPosition(), newPos)
             if ghostState.scaredTimer > ghostDist/2:
@@ -213,7 +216,53 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.get_action(gameState, 0, self.depth)
+
+
+    def get_action(self, game_state, agent_index, depth):
+        is_pacman = agent_index == 0
+        agents_size = game_state.getNumAgents()
+
+        if depth <= 0:
+            return Directions.STOP
+
+        next_agent = (agent_index+1) % agents_size
+        next_depth = depth - 1 if next_agent == 0 else depth
+
+        try:
+            func = self.get_min_score_action
+            if is_pacman:
+                func = self.get_max_score_action
+            return func(game_state.generateSuccessor(agent_index, self.get_action(game_state, next_agent, next_depth)),
+                        agent_index)
+        except:
+            return Directions.STOP
+
+    def get_max_score_action(self, game_state, agent_index):
+        result_score = self.evaluationFunction(game_state)
+        best_action = Directions.STOP
+
+        for action in game_state.getLegalActions(agent_index):
+            successor_state = game_state.generateSuccessor(agent_index, action)
+            successor_score = self.evaluationFunction(successor_state)
+            if result_score < successor_score:
+                result_score = successor_score
+                best_action = action
+
+        return best_action
+
+    def get_min_score_action(self, game_state, agent_index):
+        result_score = self.evaluationFunction(game_state)
+        best_action = Directions.STOP
+
+        for action in game_state.getLegalActions(agent_index):
+            successor_state = game_state.generateSuccessor(agent_index, action)
+            successor_score = self.evaluationFunction(successor_state)
+            if result_score > successor_score:
+                result_score = successor_score
+                best_action = action
+
+        return best_action
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
