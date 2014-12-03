@@ -13,8 +13,8 @@ from game import Directions
 import random, util
 import sys
 
-max_integer = sys.maxint
-min_integer = -sys.maxint - 1
+max_integer = 99999999   # sys.maxint
+min_integer = -99999999  # -sys.maxint - 1
 
 from game import Agent
 
@@ -193,6 +193,13 @@ class MultiAgentSearchAgent(Agent):
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
 
+
+def get_next_agent_index(agent_index, num_agents):
+    return (agent_index+1) % num_agents
+
+def get_next_depth(depth, agent_index, num_agents):
+    return depth - 1 if get_next_agent_index(agent_index, num_agents) == 0 else depth
+
 class MinimaxAgent(MultiAgentSearchAgent):
     """
       Your minimax agent (question 2)
@@ -216,53 +223,65 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-        return self.get_action(gameState, 0, self.depth)
+        # return self.get_action(gameState, 0, self.depth)[0]
+        return self.get_minimax_score_action(gameState, self.index, self.depth)[1]
 
+    # def get_action(self, game_state, agent_index, depth):
+    #     is_pacman = agent_index == 0
+    #     agents_size = game_state.getNumAgents()
+    #     next_agent = (agent_index+1) % agents_size
+    #     next_depth = depth - 1 if next_agent == 0 else depth
+    #
+    #     if game_state.isWin() or game_state.isLose():
+    #         return Directions.STOP, game_state
+    #
+    #     func = self.get_min_score_action if is_pacman else self.get_max_score_action
+    #     func(game_state, agent_index)
+    #     result = func(game_state, agent_index)
+    #     if depth > 0:
+    #         return self.get_action(result[1], next_agent, next_depth)
+    #     else:
+    #         return result;
 
-    def get_action(self, game_state, agent_index, depth):
-        is_pacman = agent_index == 0
-        agents_size = game_state.getNumAgents()
-
+    def get_minimax_score_action(self, game_state, agent_index, depth):
         if depth <= 0:
-            return Directions.STOP
+            return self.evaluationFunction(game_state), Directions.STOP
+        else:
+            is_pacman = agent_index == 0
+            func = self.get_max_score_action if is_pacman else self.get_min_score_action
+            return func(game_state, agent_index, depth)
 
-        next_agent = (agent_index+1) % agents_size
-        next_depth = depth - 1 if next_agent == 0 else depth
-
-        try:
-            func = self.get_min_score_action
-            if is_pacman:
-                func = self.get_max_score_action
-            return func(game_state.generateSuccessor(agent_index, self.get_action(game_state, next_agent, next_depth)),
-                        agent_index)
-        except:
-            return Directions.STOP
-
-    def get_max_score_action(self, game_state, agent_index):
-        result_score = self.evaluationFunction(game_state)
+    def get_max_score_action(self, game_state, agent_index, depth):
+        result_score = min_integer
         best_action = Directions.STOP
+
+        next_agent_index = get_next_agent_index(agent_index, game_state.getNumAgents())
+        next_depth = depth - 1  # get_next_depth(depth, agent_index, game_state.getNumAgents())
 
         for action in game_state.getLegalActions(agent_index):
             successor_state = game_state.generateSuccessor(agent_index, action)
-            successor_score = self.evaluationFunction(successor_state)
+            successor_score = self.get_minimax_score_action(successor_state, next_agent_index, next_depth)[0]
             if result_score < successor_score:
                 result_score = successor_score
                 best_action = action
 
-        return best_action
+        return result_score, best_action
 
-    def get_min_score_action(self, game_state, agent_index):
-        result_score = self.evaluationFunction(game_state)
+    def get_min_score_action(self, game_state, agent_index, depth):
+        result_score = max_integer
         best_action = Directions.STOP
+
+        next_agent_index = get_next_agent_index(agent_index, game_state.getNumAgents())
+        next_depth = depth - 1  # get_next_depth(depth, agent_index, game_state.getNumAgents())
 
         for action in game_state.getLegalActions(agent_index):
             successor_state = game_state.generateSuccessor(agent_index, action)
-            successor_score = self.evaluationFunction(successor_state)
+            successor_score = self.get_minimax_score_action(successor_state, next_agent_index, next_depth)[0]
             if result_score > successor_score:
                 result_score = successor_score
                 best_action = action
 
-        return best_action
+        return result_score, best_action
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
