@@ -263,140 +263,44 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
       Your minimax agent with alpha-beta pruning (question 3)
     """
 
-    class PhaseWindow:
-        def __init__(self, min_value=min_integer, max_value=max_integer):
-            self.min_value = min_value
-            self.max_value = max_value
-
-        def is_valid(self, is_max, value):
-            if is_max:
-                return self.min_value < value
-            else:
-                return self.max_value > value
-
-
-        def close(self, is_max, value):
-            if is_max:
-                if self.max_value > value:
-                    self.max_value = value
-            else:
-                if self.min_value < value:
-                    self.min_value = value
-
-
-        def test_while_min_test(self, min_value):
-            return self.min_value < min_value
-
-        def test_while_max_test(self, max_value):
-            return self.max_value > max_value
-
-        def clip_min(self, min_value):
-            if self.min_value > min_value:
-                self.min_value = min_value
-                if self.max_value < self.min_value:
-                    self.max_value = self.min_value
-
-        def clip_max(self, max_value):
-            if self.max_value < max_value:
-                self.max_value = max_value
-                if self.min_value > self.max_value:
-                    self.min_value = self.max_value
-
     def getAction(self, gameState):
         """
           Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        return self.get_alphabeta_score_action(gameState, self.index, self.depth)[1]
+        return self.get_alphabeta_score_action(gameState, self.index, self.depth, min_integer, max_integer)[1]
 
-    def get_alphabeta_score_action(self, game_state, agent_index, depth, window=None):
+    def get_alphabeta_score_action(self, game_state, agent_index, depth, alpha, beta):
         if depth <= 0 or len(game_state.getLegalActions(agent_index)) == 0:
             return self.evaluationFunction(game_state), None
         else:
-            func = self.get_max_score_action if agent_index == self.index else self.get_min_score_action
-            return func(game_state, agent_index, depth, window)
+            return self.get_minimax_score_action(game_state, agent_index, depth, agent_index == self.index, alpha, beta)
 
-    def get_max_score_action(self, game_state, agent_index, depth, window):
+    def get_minimax_score_action(self, game_state, agent_index, depth, is_max, alpha, beta):
         next_agent_index = (agent_index + 1) % game_state.getNumAgents()
         next_depth = depth if next_agent_index != self.index else depth - 1
-        # is_next_test_opposite = (agent_index == self.index) != (next_agent_index == self.index)
-        # next_window = window if window is not None else self.PhaseWindow() if is_next_test_opposite else None
-        next_window = window if window is not None else self.PhaseWindow()
-
-        result_score = min_integer
-        best_action = None
-
-        for action in game_state.getLegalActions(agent_index):
-            successor_state = game_state.generateSuccessor(agent_index, action)
-            successor_score = self.get_alphabeta_score_action(successor_state,
-                                                              next_agent_index,
-                                                              next_depth,
-                                                              next_window)[0]
-            if result_score < successor_score:
-                result_score = successor_score
-                best_action = action
-
-                if window is not None and not window.is_valid(True, successor_score):
-                    best_action = None
-                    break
-
-        if best_action is not None and window is not None:
-            window.close(True, result_score)
-
-        return result_score, best_action
-
-    def get_min_score_action(self, game_state, agent_index, depth, window):
-        next_agent_index = (agent_index + 1) % game_state.getNumAgents()
-        next_depth = depth if next_agent_index != self.index else depth - 1
-        # is_next_test_opposite = (agent_index == self.index) != (next_agent_index == self.index)
-        # next_window = window if window is not None else self.PhaseWindow() if is_next_test_opposite else None
-        next_window = window if window is not None else self.PhaseWindow()
-
-        result_score = max_integer
-        best_action = None
-
-        for action in game_state.getLegalActions(agent_index):
-            successor_state = game_state.generateSuccessor(agent_index, action)
-            successor_score = self.get_alphabeta_score_action(successor_state,
-                                                              next_agent_index,
-                                                              next_depth,
-                                                              next_window)[0]
-            if result_score > successor_score:
-                result_score = successor_score
-                best_action = action
-
-                if window is not None and not window.is_valid(False, successor_score):
-                    best_action = None
-                    break
-
-        if best_action is not None and window is not None:
-            window.close(False, result_score)
-        return result_score, best_action
-
-    def get_minimax_score_action(self, game_state, agent_index, depth, is_max, is_prev_max, window):
-        next_agent_index = (agent_index + 1) % game_state.getNumAgents()
-        next_depth = depth if next_agent_index != self.index else depth - 1
-        next_window = window if window is not None else self.PhaseWindow()
 
         result_score = min_integer if is_max else max_integer
         best_action = None
 
         for action in game_state.getLegalActions(agent_index):
             successor_state = game_state.generateSuccessor(agent_index, action)
-            successor_score = self.get_alphabeta_score_action(successor_state,
-                                                              next_agent_index,
-                                                              next_depth,
-                                                              next_window)[0]
+            successor_score = self.get_alphabeta_score_action(successor_state, next_agent_index, next_depth, alpha, beta)[0]
             if result_score < successor_score if is_max else result_score > successor_score:
                 result_score = successor_score
                 best_action = action
 
-                if window is not None:
-                    if is_max != is_prev_max and not window.is_valid(is_max, successor_score):
+                if is_max:
+                    if result_score > beta:
+                        break;
+                    if result_score > alpha:
+                        alpha = result_score
+                else:
+                    if result_score < alpha:
                         break
+                    if result_score < beta:
+                        beta = result_score
 
-        if window is not None and is_max == is_prev_max:
-            window.close(is_max, result_score)
         return result_score, best_action
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
