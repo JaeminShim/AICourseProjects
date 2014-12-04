@@ -193,6 +193,20 @@ class MultiAgentSearchAgent(Agent):
         self.evaluationFunction = util.lookup(evalFn, globals())
         self.depth = int(depth)
 
+    def get_search_index(self, game_state, agent_index, depth):
+        return (agent_index - self.index) + (self.depth - depth) * game_state.getNumAgents()
+
+    def get_max_search_index(self, game_state):
+        return self.depth * game_state.getNumAgents()
+
+    def get_agent_index_and_depth(self, game_state, index):
+        depth = self.depth - index / game_state.getNumAgents()
+        agent_index = index % game_state.getNumAgents() - self.index
+        if agent_index < 0:
+            agent_index = game_state.getNumAgents() - agent_index
+            depth -= 1
+        return agent_index, depth
+
 
 class MinimaxAgent(MultiAgentSearchAgent):
     """
@@ -316,7 +330,41 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.get_score_action(gameState, 0)[1]
+
+    def get_score_action(self, game_state, index):
+        agent_index, depth = self.get_agent_index_and_depth(game_state, index)
+        if index >= self.get_max_search_index(game_state) or len(game_state.getLegalActions(agent_index)) == 0:
+            return self.evaluationFunction(game_state), None
+        else:
+            func = self.get_max_score_action if agent_index == self.index else self.get_expect_score_action
+            return func(game_state, index)
+
+    def get_max_score_action(self, game_state, index):
+        agent_index, depth = self.get_agent_index_and_depth(game_state, index)
+        result_score = min_integer
+        best_action = None
+
+        for action in game_state.getLegalActions(agent_index):
+            successor_score = self.get_score_action(game_state.generateSuccessor(agent_index, action), index+1)[0]
+            if result_score < successor_score:
+                result_score = successor_score
+                best_action = action
+
+        return result_score, best_action
+
+    def get_expect_score_action(self, game_state, index):
+        agent_index, depth = self.get_agent_index_and_depth(game_state, index)
+        result_score = 0.0
+
+        legal_actions = game_state.getLegalActions(agent_index)
+        size = len(legal_actions)
+        if size > 0:
+            for action in legal_actions:
+                result_score += self.get_score_action(game_state.generateSuccessor(agent_index, action), index+1)[0]
+            result_score /= float(len(legal_actions))
+
+        return result_score, None  # unknown action
 
 def betterEvaluationFunction(currentGameState):
     """
@@ -326,7 +374,18 @@ def betterEvaluationFunction(currentGameState):
       DESCRIPTION: <write something here so we know what you did>
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    score = currentGameState.getScore()
+
+    pacman_pos = currentGameState.getPacmanPosition()
+    cur_food = currentGameState.getFood()
+    closest_food_dist, closest_food_pos = calc_min_food_distance(cur_food, pacman_pos)
+    farthest_food_dist = calc_max_food_distance(cur_food, pacman_pos)
+    score += 1000 - (farthest_food_dist + 2 * closest_food_dist if cur_food.count() > 1 else closest_food_dist)
+
+    # for i in range(1, currentGameState.getNumAgents()):
+    #     ghost_pos = currentGameState.getGhostPosition(i)
+
+    return score
 
 # Abbreviation
 better = betterEvaluationFunction
